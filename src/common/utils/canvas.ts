@@ -12,6 +12,7 @@
  * limitations under the License.
  */
 
+import { drawAdvancedText } from '../../extension/figure/text'
 import { isValid } from './typeChecks'
 
 let measureCtx: CanvasRenderingContext2D
@@ -42,5 +43,9 @@ export function calcTextWidth (text: string, size?: number, weight?: string | nu
     measureCtx.scale(pixelRatio, pixelRatio)
   }
   measureCtx.font = createFont(size, weight, family)
-  return Math.round(measureCtx.measureText(text).width)
+  if (isNaN(Number(text))) {
+    return Math.round(measureCtx.measureText(text).width)
+  } else {
+    return drawAdvancedText(text, measureCtx, 100000, 100000, { fontSize: Number(size ?? 12), fontWeight: Number(weight ?? 400), fontFamily: family ?? 'Roboto' })
+  }
 }
