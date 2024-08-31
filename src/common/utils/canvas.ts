@@ -43,5 +43,5 @@ export function calcTextWidth (text: string, size?: number, weight?: string | nu
     measureCtx.scale(pixelRatio, pixelRatio)
   }
   measureCtx.font = createFont(size, weight, family)
-  return drawAdvancedText(text, measureCtx, 100000, 100000, { fontSize: Number(size ?? 12), fontWeight: Number(weight ?? 400), fontFamily: family ?? 'Roboto' })
+  return Math.round(drawAdvancedText(text, measureCtx, 100000, 100000, { fontSize: Number(size ?? 12), fontWeight: Number(weight ?? 400), fontFamily: family ?? 'Roboto' }))
 }
