@@ -293,7 +293,7 @@ export default class ChartStore {
           this._chart.adjustPaneViewport(false, true, true, true)
         }
         this._actionStore.execute(ActionType.OnDataReady)
-      } catch {}
+      } catch { }
     }
   }
 
@@ -322,7 +322,7 @@ export default class ChartStore {
       )
     ) {
       const cb: ((data: KLineData[], more?: boolean) => void) = (data: KLineData[], more?: boolean) => {
-        this.addData(data, params.type, more).then(() => {}).catch(() => {})
+        this.addData(data, params.type, more).then(() => { }).catch(() => { })
       }
       this._loading = true
       this._loadDataCallback({ ...params, callback: cb })

@@ -18,8 +18,8 @@ const reEscapeChar = /\\(\\)?/g
 const rePropName = RegExp(
   '[^.[\\]]+' + '|' +
   '\\[(?:' +
-    '([^"\'][^[]*)' + '|' +
-    '(["\'])((?:(?!\\2)[^\\\\]|\\\\.)*?)\\2' +
+  '([^"\'][^[]*)' + '|' +
+  '(["\'])((?:(?!\\2)[^\\\\]|\\\\.)*?)\\2' +
   ')\\]' + '|' +
   '(?=(?:\\.|\\[\\])(?:\\.|\\[\\]|$))'
   , 'g')
@@ -117,18 +117,19 @@ export function formatThousands (value: string | number, sign: string): string {
   return vl.replace(/(\d)(?=(\d{3})+$)/g, $1 => `${$1}${sign}`)
 }
 
-export function formatFoldDecimal (value: string | number, threshold: number): string {
+export function formatFoldDecimal (value: string | number, threshold?: number): string {
   const vl = `${value}`
-  const reg = new RegExp('\\.0{' + threshold + ',}[1-9][0-9]*$')
-  if (reg.test(vl)) {
-    const result = vl.split('.')
-    const v = result[result.length - 1]
-    const match = v.match(/0*/)
-    if (isValid(match)) {
-      const count = match[0].length
-      result[result.length - 1] = v.replace(/0*/, `0{${count}}`)
-      return result.join('.')
-    }
-  }
   return vl
+  // const reg = new RegExp('\\.0{' + threshold + ',}[1-9][0-9]*$')
+  // if (reg.test(vl)) {
+  //   const result = vl.split('.')
+  //   const v = result[result.length - 1]
+  //   const match = v.match(/0*/)
+  //   if (isValid(match)) {
+  //     const count = match[0].length
+  //     result[result.length - 1] = v.replace(/0*/, `0{${count}}`)
+  //     return result.join('.')
+  //   }
+  // }
+  // return vl
 }
