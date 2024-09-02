@@ -446,8 +446,19 @@ export default class Event implements EventHandler {
           }
           return true
         }
-        case WidgetNameConstants.X_AXIS:
+        case WidgetNameConstants.X_AXIS: {
+          const consumed = widget.dispatchEvent('mouseDownEvent', event)
+          if (consumed) {
+            this._chart.updatePane(UpdateLevel.Overlay)
+          }
+          return consumed
+        }
+
         case WidgetNameConstants.Y_AXIS: {
+          this._startScrollCoordinate = { x: event.x, y: event.y }
+          const range = (pane as DrawPane<YAxis>).getAxisComponent().getRange() ?? null
+          this._prevYAxisRange = range === null ? range : { ...range }
+          this._yAxisStartScaleDistance = event.pageY
           const consumed = widget.dispatchEvent('mouseDownEvent', event)
           if (consumed) {
             this._chart.updatePane(UpdateLevel.Overlay)
@@ -488,8 +499,7 @@ export default class Event implements EventHandler {
           }
           return true
         }
-        case WidgetNameConstants.X_AXIS:
-        case WidgetNameConstants.Y_AXIS: {
+        case WidgetNameConstants.X_AXIS: {
           const consumed = widget.dispatchEvent('pressedMouseMoveEvent', event)
           if (consumed) {
             event.preventDefault?.()
@@ -497,51 +507,75 @@ export default class Event implements EventHandler {
           }
           return consumed
         }
+
+        case WidgetNameConstants.Y_AXIS: {
+          event.preventDefault?.()
+          const yAxis = (pane as DrawPane<YAxis>).getAxisComponent()
+          if (this._prevYAxisRange !== null && yAxis.getScrollZoomEnabled()) {
+            const { from, to, range } = this._prevYAxisRange
+            const scale = event.pageY / this._yAxisStartScaleDistance
+            const newRange = range * scale
+            const difRange = (newRange - range) / 2
+            const newFrom = from - difRange
+            const newTo = to + difRange
+            const newRealFrom = yAxis.convertToRealValue(newFrom)
+            const newRealTo = yAxis.convertToRealValue(newTo)
+            yAxis.setRange({
+              from: newFrom,
+              to: newTo,
+              range: newRange,
+              realFrom: newRealFrom,
+              realTo: newRealTo,
+              realRange: newRealTo - newRealFrom
+            })
+            this._chart.adjustPaneViewport(false, true, true, true)
+          }
+          return false
+        }
       }
+      return false
     }
     return false
   }
 
   touchEndEvent (e: MouseTouchEvent): boolean {
     const { widget } = this._findWidgetByEvent(e)
-    if (widget !== null) {
-      const event = this._makeWidgetEvent(e, widget)
-      const name = widget.getName()
-      switch (name) {
-        case WidgetNameConstants.MAIN: {
-          widget.dispatchEvent('mouseUpEvent', event)
-          if (this._startScrollCoordinate !== null) {
-            const time = new Date().getTime() - this._flingStartTime
-            const distance = event.x - this._startScrollCoordinate.x
-            let v = distance / (time > 0 ? time : 1) * 20
-            if (time < 200 && Math.abs(v) > 0) {
-              const timeScaleStore = this._chart.getChartStore().getTimeScaleStore()
-              const flingScroll: (() => void) = () => {
-                this._flingScrollRequestId = requestAnimationFrame(() => {
-                  timeScaleStore.startScroll()
-                  timeScaleStore.scroll(v)
-                  v = v * (1 - 0.025)
-                  if (Math.abs(v) < 1) {
-                    if (this._flingScrollRequestId !== null) {
-                      cancelAnimationFrame(this._flingScrollRequestId)
-                      this._flingScrollRequestId = null
-                    }
-                  } else {
-                    flingScroll()
+    const event = this._makeWidgetEvent(e, widget)
+    const name = widget.getName()
+    switch (name) {
+      case WidgetNameConstants.MAIN: {
+        widget.dispatchEvent('mouseUpEvent', event)
+        if (this._startScrollCoordinate !== null) {
+          const time = new Date().getTime() - this._flingStartTime
+          const distance = event.x - this._startScrollCoordinate.x
+          let v = distance / (time > 0 ? time : 1) * 20
+          if (time < 200 && Math.abs(v) > 0) {
+            const timeScaleStore = this._chart.getChartStore().getTimeScaleStore()
+            const flingScroll: (() => void) = () => {
+              this._flingScrollRequestId = requestAnimationFrame(() => {
+                timeScaleStore.startScroll()
+                timeScaleStore.scroll(v)
+                v = v * (1 - 0.025)
+                if (Math.abs(v) < 1) {
+                  if (this._flingScrollRequestId !== null) {
+                    cancelAnimationFrame(this._flingScrollRequestId)
+                    this._flingScrollRequestId = null
                   }
-                })
-              }
-              flingScroll()
+                } else {
+                  flingScroll()
+                }
+              })
             }
+            flingScroll()
           }
-          return true
         }
-        case WidgetNameConstants.X_AXIS:
-        case WidgetNameConstants.Y_AXIS: {
-          const consumed = widget.dispatchEvent('mouseUpEvent', event)
-          if (consumed) {
-            this._chart.updatePane(UpdateLevel.Overlay)
-          }
+        return true
+      }
+      case WidgetNameConstants.X_AXIS:
+      case WidgetNameConstants.Y_AXIS: {
+        const consumed = widget.dispatchEvent('mouseUpEvent', event)
+        if (consumed) {
+          this._chart.updatePane(UpdateLevel.Overlay)
         }
       }
     }
