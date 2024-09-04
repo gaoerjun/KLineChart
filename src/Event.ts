@@ -29,6 +29,7 @@ import { PaneIdConstants } from './pane/types'
 import type Widget from './widget/Widget'
 import { WidgetNameConstants, REAL_SEPARATOR_HEIGHT } from './widget/types'
 import type DrawPane from './pane/DrawPane'
+import { ActionType } from './common/Action'
 
 interface EventTriggerWidgetInfo {
   pane: Nullable<Pane>
@@ -266,6 +267,7 @@ export default class Event implements EventHandler {
             }
             const distance = event.x - this._startScrollCoordinate.x
             this._chart.getChartStore().getTimeScaleStore().scroll(distance)
+            this._chart.getChartStore().getActionStore().execute(ActionType.OnYAxisScaleChange)
           }
           this._chart.getChartStore().getTooltipStore().setCrosshair({ x: event.x, y: event.y, paneId: pane?.getId() })
           return consumed
@@ -309,6 +311,7 @@ export default class Event implements EventHandler {
                 realRange: newRealTo - newRealFrom
               })
               this._chart.adjustPaneViewport(false, true, true, true)
+              this._chart.getChartStore().getActionStore().execute(ActionType.OnYAxisScaleChange)
             }
           } else {
             this._chart.updatePane(UpdateLevel.Overlay)
@@ -529,6 +532,7 @@ export default class Event implements EventHandler {
               realRange: newRealTo - newRealFrom
             })
             this._chart.adjustPaneViewport(false, true, true, true)
+            chartStore.getActionStore().execute(ActionType.OnYAxisScaleChange)
           }
           return false
         }
@@ -541,10 +545,10 @@ export default class Event implements EventHandler {
   touchEndEvent (e: MouseTouchEvent): boolean {
     const { widget } = this._findWidgetByEvent(e)
     const event = this._makeWidgetEvent(e, widget)
-    const name = widget.getName()
+    const name = widget?.getName()
     switch (name) {
       case WidgetNameConstants.MAIN: {
-        widget.dispatchEvent('mouseUpEvent', event)
+        widget?.dispatchEvent('mouseUpEvent', event)
         if (this._startScrollCoordinate !== null) {
           const time = new Date().getTime() - this._flingStartTime
           const distance = event.x - this._startScrollCoordinate.x
@@ -573,7 +577,7 @@ export default class Event implements EventHandler {
       }
       case WidgetNameConstants.X_AXIS:
       case WidgetNameConstants.Y_AXIS: {
-        const consumed = widget.dispatchEvent('mouseUpEvent', event)
+        const consumed = widget?.dispatchEvent('mouseUpEvent', event) ?? false
         if (consumed) {
           this._chart.updatePane(UpdateLevel.Overlay)
         }
