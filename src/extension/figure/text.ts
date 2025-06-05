@@ -118,8 +118,13 @@ export function format (value: string | number, decimal: number, groupSeparator 
 }
 export const drawAdvancedText = (_value: string, ctx: CanvasRenderingContext2D, x: number, y: number, fontInfo: FontInfo): number => {
   let totalLength = 0
-
-  if (isNaN(Number(_value)) || Number(_value) === 0) {
+  if (Number(_value) === 0) {
+    _value = '0.0000'
+    ctx.fillText(_value, x, y)
+    const valueLength = ctx.measureText(_value).width
+    totalLength = totalLength + valueLength
+    x = x + valueLength
+  } else if (isNaN(Number(_value))) {
     ctx.fillText(_value, x, y)
     const valueLength = ctx.measureText(_value).width
     totalLength = totalLength + valueLength
